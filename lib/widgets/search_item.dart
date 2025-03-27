@@ -42,7 +42,7 @@ class _InventorySearchState extends State<InventorySearch> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ItemDetailsPage(item: item),
+            builder: (context) => ItemDetailsPage(item: item, selectedBranch: '', selectedBranchCode: '',),
           ),
         );
       } else {

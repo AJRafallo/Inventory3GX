@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 Future<List<Map<String, String>>> fetchBranchNames() async {
-  final response = await http.get(Uri.parse('http://10.0.2.2/3GXInventory/php/get_branches.php'));
+  final response = await http.get(Uri.parse('http://192.168.86.20/3GXInventory/php/get_branches.php'));
 
   if (response.statusCode == 200) {
     // Parse the response body

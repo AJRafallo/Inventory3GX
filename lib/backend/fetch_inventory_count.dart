@@ -3,7 +3,7 @@ import 'dart:convert';
 
 Future<int> fetchBranchCount(String itemNo, String branchNo) async {
   // Construct the URL with parameters
-  var url = Uri.parse('http://10.0.2.2/3GXInventory/php/fetch_count.php');
+  var url = Uri.parse('http://192.168.86.20/3GXInventory/php/fetch_count.php');
 
   // Make the GET request with the parameters
   var response = await http.get(url);

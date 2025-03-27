@@ -34,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    const String url = "http://10.0.2.2/3GXInventory/php/register.php";
+    const String url = "http://192.168.86.20/3GXInventory/php/register.php";
     Map<String, String> body = {
       "Uname": _unameController.text.trim(),
       "Pword": _pwordController.text,
@@ -66,7 +66,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("⚠️ Network error: Could not connect to server")),
+        const SnackBar(
+            content: Text("⚠️ Network error: Could not connect to server")),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -82,32 +83,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
           bool isWideScreen = constraints.maxWidth > 800;
 
           return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  if (isWideScreen)
-                    Row(
+            child: Center(
+              child: isWideScreen
+                  ? Row(
                       children: [
                         Expanded(
-                          child: Image.asset(
-                            'lib/assets/Laptop.png',
-                            width: 300,
-                            height: 250,
+                          child: Container(
+                            color: Colors.red[900],
+                            height: MediaQuery.of(context).size.height,
+                            padding: const EdgeInsets.symmetric(vertical: 30),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'lib/assets/Laptop.png',
+                                  width: constraints.maxWidth * 0.35,
+                                  height: constraints.maxHeight * 0.4,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Tabaco - Legazpi - Daet - Sorsogon',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        Expanded(child: _buildForm()),
+                        Expanded(child: _buildForm(isWideScreen)),
                       ],
                     )
-                  else
-                    Column(
+                  : Column(
                       children: [
-                        Image.asset('lib/assets/Laptop.png', width: 250, height: 200),
-                        _buildForm(),
+                        Container(
+                          
+                          padding: const EdgeInsets.symmetric(vertical: 30),
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                'lib/assets/Laptop.png',
+                                width: constraints.maxWidth * 0.6,
+                                height: 200,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Tabaco - Legazpi - Daet - Sorsogon',
+                                style: TextStyle(
+                                    color: Colors.black, fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _buildForm(isWideScreen),
                       ],
                     ),
-                ],
-              ),
             ),
           );
         },
@@ -115,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildForm(bool isWideScreen) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -127,7 +158,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 20),
           _buildTextField(_unameController, "Username"),
-          _buildTextField(_emailController, "Email", keyboardType: TextInputType.emailAddress),
+          _buildTextField(_emailController, "Email",
+              keyboardType: TextInputType.emailAddress),
           _buildPasswordField(),
           _buildTextField(_empNoController, "Employee Number"),
           _buildTextField(_utypeController, "User Type"),
@@ -140,7 +172,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             child: _isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
-                : const Text("Sign up", style: TextStyle(fontSize: 16, color: Colors.white)),
+                : const Text("Sign up",
+                    style: TextStyle(fontSize: 16, color: Colors.white)),
           ),
           const SizedBox(height: 20),
           Row(
@@ -149,7 +182,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const Text("Already have an account?"),
               GestureDetector(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()));
                 },
                 child: const Text(
                   " Log in",
@@ -163,7 +199,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(TextEditingController controller, String label,
+      {TextInputType keyboardType = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: TextField(
@@ -171,7 +208,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(25))),
+          border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(25))),
         ),
       ),
     );
@@ -185,10 +223,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         obscureText: _obscurePassword,
         decoration: InputDecoration(
           labelText: "Password",
-          border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(25))),
+          border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(25))),
           suffixIcon: IconButton(
-            icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            icon: Icon(
+                _obscurePassword ? Icons.visibility : Icons.visibility_off),
+            onPressed: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
       ),

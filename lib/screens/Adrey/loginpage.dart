@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   Future<void> loginUser() async {
-    const String url = "http://10.0.2.2/3GXInventory/php/login.php";
+    const String url = "http://192.168.86.20/3GXInventory/php/login.php";
 
     Map<String, String> body = {
       "Uname": _unameController.text.trim(),
@@ -105,9 +105,9 @@ class _LoginPageState extends State<LoginPage> {
                   : Column(
                       children: [
                         Container(
-                          color: Colors.red[900],
                           padding: const EdgeInsets.symmetric(vertical: 30),
                           child: Column(
+
                             children: [
                               Image.asset(
                                 'lib/assets/Laptop.png',
@@ -118,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: 10),
                               const Text(
                                 'Tabaco - Legazpi - Daet - Sorsogon',
-                                style: TextStyle(color: Colors.white, fontSize: 16),
+                                style: TextStyle(color: Colors.black, fontSize: 16),
                               ),
                             ],
                           ),

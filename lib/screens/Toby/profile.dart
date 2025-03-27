@@ -32,7 +32,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _logout() async {
     final response = await http.get(
-      Uri.parse("http://10.0.2.2/3GXInventory/php/logout.php"),
+      Uri.parse("http://192.168.86.20/3GXInventory/php/logout.php"),
     );
 
     if (response.statusCode == 200) {
