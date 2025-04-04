@@ -1,3 +1,4 @@
+import 'package:_3gx_application/backend/get_branches.dart';
 import 'package:_3gx_application/backend/get_item_details.dart';
 import 'package:_3gx_application/screens/Toby/item_details.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,10 @@ class _ItemlistPageState extends State<ItemlistPage> {
   TextEditingController _searchController = TextEditingController();
   List<Item> _allItems = [];
   List<Item> _filteredItems = [];
+  String? selectedBranch;
+  String? selectedBranchCode;
+  int _currentPage = 0;
+  static const int _itemsPerPage = 4;
 
   @override
   void initState() {
@@ -46,8 +51,10 @@ class _ItemlistPageState extends State<ItemlistPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
     return SafeArea(
       child: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
           title: _isSearching
               ? TextField(
@@ -102,10 +109,61 @@ class _ItemlistPageState extends State<ItemlistPage> {
           backgroundColor: Colors.white,
         ),
         body: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.only(
+            top: isSmallScreen ? 5.0 : 5.0, // Custom top padding
+            left: isSmallScreen ? 20.0 : 5.0,
+            right: isSmallScreen ? 20.0 : 5.0,
+            bottom: isSmallScreen ? 20.0 : 20.0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              FutureBuilder<List<Map<String, String>>>(
+                future: fetchBranchNames(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Select Branch",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: selectedBranch,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                        ),
+                        items: snapshot.data!
+                            .map<DropdownMenuItem<String>>((branch) {
+                          return DropdownMenuItem<String>(
+                            value: branch['BranchName'],
+                            child: Text(branch['BranchName']!),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedBranch = value;
+                            selectedBranchCode = snapshot.data!.firstWhere(
+                                    (branch) => branch['BranchName'] == value)[
+                                'BranchCode'];
+                          });
+                        },
+                        hint: Text("Select a branch"),
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                  );
+                },
+              ),
               // Summary Section
               Text(
                 'Summary',
@@ -198,32 +256,102 @@ class _ItemlistPageState extends State<ItemlistPage> {
               Expanded(
                 child: _filteredItems.isEmpty
                     ? Center(child: Text('No items available'))
-                    : ListView.builder(
-                        itemCount: _filteredItems.length,
-                        itemBuilder: (context, index) {
-                          Item item = _filteredItems[index];
-                          return ListTile(
-                            title: Text(
-                              item.itemDesc,
-                              style: GoogleFonts.poppins(),
+                    : Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: (_filteredItems.length -
+                                          (_currentPage * _itemsPerPage)) >
+                                      _itemsPerPage
+                                  ? _itemsPerPage
+                                  : (_filteredItems.length -
+                                      (_currentPage *
+                                          _itemsPerPage)), // Show max 5 items
+                              itemBuilder: (context, index) {
+                                int actualIndex =
+                                    _currentPage * _itemsPerPage + index;
+                                if (actualIndex >= _filteredItems.length)
+                                  return SizedBox(); // Prevent out-of-bounds error
+
+                                Item item = _filteredItems[actualIndex];
+                                return ListTile(
+                                  title: Text(
+                                    item.itemDesc,
+                                    style: GoogleFonts.poppins(),
+                                  ),
+                                  subtitle: Text(
+                                    'Item No: ${item.itemNo}\nPrice: ${item.itemPrice} | Qty: ${item.qty}',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    if (selectedBranch == null ||
+                                        selectedBranchCode == null) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Please select a branch first'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ItemDetailsPage(
+                                          item: item,
+                                          selectedBranch: selectedBranch!,
+                                          selectedBranchCode:
+                                              selectedBranchCode!,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                            subtitle: Text(
-                              'Item No: ${item.itemNo}\nPrice: ${item.itemPrice} | Qty: ${item.qty}',
-                              style: GoogleFonts.poppins(
-                                color: Colors.grey[600],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                onPressed: _currentPage > 0
+                                    ? () {
+                                        setState(() {
+                                          _currentPage--;
+                                        });
+                                      }
+                                    : null,
+                                icon: Icon(Icons.chevron_left, size: 24),
                               ),
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ItemDetailsPage(item:item),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Text(
+                                  'Page ${_currentPage + 1}',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500),
                                 ),
-                              );
-                            },
-                          );
-                        },
+                              ),
+                              IconButton(
+                                onPressed:
+                                    ((_currentPage + 1) * _itemsPerPage) <
+                                            _filteredItems.length
+                                        ? () {
+                                            setState(() {
+                                              _currentPage++;
+                                            });
+                                          }
+                                        : null,
+                                icon: Icon(Icons.chevron_right, size: 24),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
               ),
             ],

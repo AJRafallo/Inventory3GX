@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:_3gx_application/screens/Adrey/signuppage.dart';
 import 'package:_3gx_application/screens/Toby/side_bar.dart';
 
@@ -14,11 +15,44 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _unameController = TextEditingController();
   final TextEditingController _pwordController = TextEditingController();
+  final TextEditingController _ipController =
+      TextEditingController(text: '192.168.86.20');
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _showIpField = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedIp();
+  }
+
+  Future<void> _loadSavedIp() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedIp = prefs.getString('server_ip');
+    if (savedIp != null) {
+      _ipController.text = savedIp; // Pre-populate the IP field
+    }
+  }
+
+  Future<void> _saveIp() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('server_ip', _ipController.text.trim());
+  }
+
+  // Fast login - directly navigates to main screen
+  void _fastLogin() async {
+    await _saveIp(); // Save the IP before navigation
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => BottomNavBar()),
+    );
+  }
+
+  /*
+  // Original login functionality (commented out but modified with IP selection)
   Future<void> loginUser() async {
-    const String url = "http://10.0.2.2/3GXInventory/php/login.php";
+    final String url = "http://${_ipController.text.trim()}/3GXInventory/login.php";
 
     Map<String, String> body = {
       "Uname": _unameController.text.trim(),
@@ -63,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
   }
+  */
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +128,8 @@ class _LoginPageState extends State<LoginPage> {
                                 const SizedBox(height: 10),
                                 const Text(
                                   'Tabaco - Legazpi - Daet - Sorsogon',
-                                  style: TextStyle(color: Colors.white, fontSize: 18),
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 18),
                                 ),
                               ],
                             ),
@@ -118,7 +154,8 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: 10),
                               const Text(
                                 'Tabaco - Legazpi - Daet - Sorsogon',
-                                style: TextStyle(color: Colors.white, fontSize: 16),
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 16),
                               ),
                             ],
                           ),
@@ -155,6 +192,23 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 30),
+
+          // Server IP Field (conditionally shown)
+          if (_showIpField) ...[
+            TextField(
+              controller: _ipController,
+              decoration: const InputDecoration(
+                labelText: "Server IP",
+                hintText: "e.g., 192.168.1.100",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(25)),
+                ),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 15),
+          ],
+
           TextField(
             controller: _unameController,
             decoration: const InputDecoration(
@@ -174,7 +228,8 @@ class _LoginPageState extends State<LoginPage> {
                 borderRadius: BorderRadius.all(Radius.circular(25)),
               ),
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off),
                 onPressed: () {
                   setState(() {
                     _obscurePassword = !_obscurePassword;
@@ -184,11 +239,28 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 20),
+
+          // Toggle IP Field Button
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _showIpField = !_showIpField;
+                });
+              },
+              child: Text(
+                _showIpField ? "Hide Server Settings" : "Change Server",
+                style: TextStyle(color: Colors.red[900]),
+              ),
+            ),
+          ),
+
           Center(
             child: SizedBox(
               width: isWideScreen ? 300 : double.infinity,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : loginUser,
+                onPressed: _fastLogin,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   backgroundColor: Colors.red[900],
@@ -211,7 +283,8 @@ class _LoginPageState extends State<LoginPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const RegisterScreen()),
                   );
                 },
                 child: const Text(

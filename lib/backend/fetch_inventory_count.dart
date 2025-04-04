@@ -1,9 +1,19 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<int> fetchBranchCount(String itemNo, String branchNo) async {
-  // Construct the URL with parameters
-  var url = Uri.parse('http://10.0.2.2/3GXInventory/php/fetch_count.php');
+  // Retrieve the saved IP from SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final serverIp = prefs.getString('server_ip');
+
+  // Check if the server IP is null or empty
+  if (serverIp == null || serverIp.isEmpty) {
+    throw Exception("Server IP not set. Please set the IP address first.");
+  }
+
+  // Construct the URL with the dynamic IP and parameters
+  var url = Uri.parse('http://$serverIp/3GXInventory/fetch_count.php?Item_No=$itemNo&Bra_No=$branchNo');
 
   // Make the GET request with the parameters
   var response = await http.get(url);

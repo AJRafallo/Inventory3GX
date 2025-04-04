@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:_3gx_application/screens/Adrey/loginpage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
@@ -34,7 +35,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    const String url = "http://10.0.2.2/3GXInventory/php/register.php";
+   const String url = "http://192.168.86.27/3GXInventory/register.php";
+
     Map<String, String> body = {
       "Uname": _unameController.text.trim(),
       "Pword": _pwordController.text,
@@ -82,33 +84,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
           bool isWideScreen = constraints.maxWidth > 800;
 
           return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
+           
               child: Column(
                 children: [
                   if (isWideScreen)
                     Row(
                       children: [
-                        Expanded(
-                          child: Image.asset(
-                            'lib/assets/Laptop.png',
-                            width: 300,
-                            height: 250,
+                        Container(
+                            color: Colors.red[900],
+                            height: MediaQuery.of(context).size.height,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'lib/assets/Laptop.png',
+                                  width: constraints.maxWidth * 0.35,
+                                  height: constraints.maxHeight * 0.4,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Tabaco - Legazpi - Daet - Sorsogon',
+                                  style: TextStyle(color: Colors.white, fontSize: 18),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                         Expanded(child: _buildForm()),
                       ],
                     )
                   else
                     Column(
                       children: [
-                        Image.asset('lib/assets/Laptop.png', width: 250, height: 200),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red[900],
+                            borderRadius: BorderRadius.only(
+                              // For specific corners
+                              bottomLeft: Radius.circular(20.0),
+                              bottomRight: Radius.circular(20.0),
+                            ),
+                           
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 30),
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                'lib/assets/Laptop.png',
+                                width: constraints.maxWidth * 1,
+                                height: 200,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Tabaco - Legazpi - Daet - Sorsogon',
+                                style: TextStyle(color: Colors.white, fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
                         _buildForm(),
                       ],
                     ),
                 ],
               ),
-            ),
+           
           );
         },
       ),
@@ -121,10 +161,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
-            "User Registration",
-            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-          ),
+          Text(
+                  "user Registration",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18, 
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  "Create Account",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14, 
+                  ),
+                ),
           const SizedBox(height: 20),
           _buildTextField(_unameController, "Username"),
           _buildTextField(_emailController, "Email", keyboardType: TextInputType.emailAddress),

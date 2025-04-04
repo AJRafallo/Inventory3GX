@@ -1,13 +1,27 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<List<Item>> fetchItems() async {
-  final response = await http.get(Uri.parse('http://10.0.2.2/3GXInventory/php/get_item_details.php'));
+  // Retrieve the saved IP from SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final serverIp = prefs.getString('server_ip');
+  
+  // Check if the server IP is null or empty
+  if (serverIp == null || serverIp.isEmpty) {
+    throw Exception("Server IP not set. Please set the IP address first.");
+  }
+  
+  // Construct the URL with the dynamic IP
+  final url = 'http://$serverIp/3GXInventory/get_item_details.php';
+  
+  // Make the API call
+  final response = await http.get(Uri.parse(url));
 
   print('Response status: ${response.statusCode}');
   print('Response body: ${response.body}');
 
+  // Check if the response is successful
   if (response.statusCode == 200) {
     final Map<String, dynamic> responseData = jsonDecode(response.body);
 
@@ -28,10 +42,10 @@ class Item {
   final double itemPrice;
   final double qty;
   final String barcode;
- 
+
   final DateTime? lastOrderDate;
   final DateTime? dateCreated;
-  final DateTime? dateModified; // Included DateModified
+  final DateTime? dateModified;
 
   Item({
     required this.itemNo,
@@ -39,7 +53,6 @@ class Item {
     required this.itemPrice,
     required this.qty,
     required this.barcode,
-   
     this.lastOrderDate,
     this.dateCreated,
     this.dateModified,
@@ -61,13 +74,9 @@ class Item {
       itemPrice: json['Item_Price'] != null ? double.tryParse(json['Item_Price'].toString()) ?? 0.0 : 0.0,
       qty: json['Qty'] != null ? double.tryParse(json['Qty'].toString()) ?? 0.0 : 0.0,
       barcode: json['Barcode'] ?? '',
-      
       lastOrderDate: parseDate(json['Last_Order_Date']),
       dateCreated: parseDate(json['DateCreated']),
       dateModified: parseDate(json['DateModified']),
     );
   }
 }
-
-
-
