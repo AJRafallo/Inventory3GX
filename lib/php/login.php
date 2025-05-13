@@ -31,7 +31,7 @@ if ($stmt->num_rows === 1) {
     error_log("Stored Hash: " . $hashedPassword);
     error_log("Entered Password: " . $pword);
 
-    // Verify password
+    // Check if the password matches
     if (password_verify($pword, $hashedPassword)) {
         echo json_encode(["status" => "success", "message" => "Login successful"]);
     } else {
