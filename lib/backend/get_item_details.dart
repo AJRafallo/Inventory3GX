@@ -1,9 +1,9 @@
-import 'dart:convert';
+/*import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 
 Future<List<Item>> fetchItems() async {
-  final response = await http.get(Uri.parse('http://192.168.86.20/3GXInventory/php/get_item_details.php'));
+  final response = await http.get(Uri.parse('http://192.168.86.36/3GXInventory/php/get_item_details.php'));
 
   print('Response status: ${response.statusCode}');
   print('Response body: ${response.body}');
@@ -22,7 +22,7 @@ Future<List<Item>> fetchItems() async {
   }
 }
 
-class Item {
+class Items {
   final String itemNo;
   final String itemDesc;
   final double itemPrice;
@@ -32,6 +32,7 @@ class Item {
   final DateTime? lastOrderDate;
   final DateTime? dateCreated;
   final DateTime? dateModified; // Included DateModified
+  final String? itemPixFilename;
 
   Item({
     required this.itemNo,
@@ -43,6 +44,7 @@ class Item {
     this.lastOrderDate,
     this.dateCreated,
     this.dateModified,
+    this.itemPixFilename,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -61,7 +63,7 @@ class Item {
       itemPrice: json['Item_Price'] != null ? double.tryParse(json['Item_Price'].toString()) ?? 0.0 : 0.0,
       qty: json['Qty'] != null ? double.tryParse(json['Qty'].toString()) ?? 0.0 : 0.0,
       barcode: json['Barcode'] ?? '',
-      
+      itemPixFilename: json['Item_Pix_Filename'] ?? '',
       lastOrderDate: parseDate(json['Last_Order_Date']),
       dateCreated: parseDate(json['DateCreated']),
       dateModified: parseDate(json['DateModified']),
@@ -71,3 +73,4 @@ class Item {
 
 
 
+*/

@@ -1,8 +1,7 @@
+import 'package:_3gx_application/backend/erpGetItem.dart';
+import 'package:_3gx_application/backend/erpInsertCount.dart';
 import 'package:_3gx_application/screens/Toby/design.dart';
 import 'package:flutter/material.dart';
-import 'package:_3gx_application/backend/fetch_inventory_count.dart';
-import 'package:_3gx_application/backend/insert_inventory_count.dart';
-import 'package:_3gx_application/backend/get_item_details.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ItemDetailsPage extends StatefulWidget {
@@ -22,6 +21,42 @@ class ItemDetailsPage extends StatefulWidget {
 
 class _ItemDetailsPageState extends State<ItemDetailsPage> {
   TextEditingController countController = TextEditingController();
+  bool _showDatabaseCount = false; // Changed default to false for security
+
+  // Add this password dialog function
+  Future<String?> _showPasswordDialog(BuildContext context) async {
+    TextEditingController passwordController = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Enter Password', style: GoogleFonts.poppins()),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: GoogleFonts.poppins()),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(passwordController.text);
+              },
+              child: Text('OK', style: GoogleFonts.poppins()),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,8 +79,8 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
         body: SingleChildScrollView(
           padding: EdgeInsets.only(
             top: isSmallScreen ? 5.0 : 5.0,
-            left: isSmallScreen ? 20.0 : 200.0,
-            right: isSmallScreen ? 20.0 : 200.0,
+            left: isSmallScreen ? 70.0 : 70.0,
+            right: isSmallScreen ? 70.0 : 70.0,
             bottom: isSmallScreen ? 20.0 : 20.0,
           ),
           child: Column(
@@ -74,6 +109,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                 style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
               ),
               SizedBox(height: 10),
+
               ItemDetailsDesign.buildSectionHeader(widget.item.itemDesc),
               Text.rich(
                 TextSpan(
@@ -130,38 +166,83 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
 
               SizedBox(height: isSmallScreen ? 16 : 24),
 
-              // Database count
-              ItemDetailsDesign.buildSectionHeader("Database Count",
+              // Modified Database count with password protection
+              ItemDetailsDesign.buildSectionHeader("Branch Count",
                   icon: Icons.inventory),
-              Text(
-                "Item count from the database.",
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-              ),
-              ItemDetailsDesign.buildInfoCard(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ItemDetailsDesign.buildInfoRow(
-                    "Count",
-                    widget.item.qty.toString(),
-                    icon: Icons.format_list_numbered,
-                    valueStyle: GoogleFonts.lato(
-                      fontSize: isSmallScreen ? 16 : 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.green,
-                    ),
-                    isSmallScreen: isSmallScreen,
+                  Text(
+                    "Item count in ${widget.selectedBranch} branch.",
+                    style:
+                        GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
+                  ),
+                  Row(
+                    children: [
+                      Text("Show", style: GoogleFonts.poppins(fontSize: 12)),
+                      Switch(
+                        value: _showDatabaseCount,
+                        onChanged: (value) async {
+                          if (value) {
+                            String? password =
+                                await _showPasswordDialog(context);
+                            if (password == '3GXSolutions!') {
+                              setState(() {
+                                _showDatabaseCount = true;
+                              });
+                            } else if (password != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Incorrect password!',
+                                      style: GoogleFonts.poppins()),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } else {
+                            setState(() {
+                              _showDatabaseCount = false;
+                            });
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
+              SizedBox(height: 10),
+              if (_showDatabaseCount)
+                FutureBuilder<int>(
+                  future: fetchInventoryBranchCount(
+                      widget.item.itemNo, widget.selectedBranchCode),
+                  builder: (context, snapshot) {
+                    return ItemDetailsDesign.buildInfoCard(
+                      children: [
+                        ItemDetailsDesign.buildInfoRow(
+                          "Count",
+                          snapshot.data?.toString() ?? "0",
+                          icon: Icons.format_list_numbered,
+                          valueStyle: GoogleFonts.lato(
+                            fontSize: isSmallScreen ? 16 : 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.green,
+                          ),
+                          isSmallScreen: isSmallScreen,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+
+              SizedBox(height: 10),
+
               SizedBox(height: isSmallScreen ? 16 : 24),
-              
-              // Current Count for Selected Branch
+
+              // Rest of the code remains unchanged...
               ItemDetailsDesign.buildSectionHeader("Current Count",
                   icon: Icons.inventory),
               Text(
-                "Item count from ${widget.selectedBranch} branch.",
+                "Item count to be added to ${widget.selectedBranch} branch.",
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: Colors.grey,
@@ -169,7 +250,8 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
               ),
               SizedBox(height: 10),
               FutureBuilder<int>(
-                future: fetchBranchCount(widget.item.itemNo, widget.selectedBranchCode),
+                future:
+                    fetchCount(widget.item.itemNo, widget.selectedBranchCode),
                 builder: (context, snapshot) {
                   return ItemDetailsDesign.buildInfoCard(
                     children: [
@@ -190,7 +272,6 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
               ),
               SizedBox(height: isSmallScreen ? 16 : 24),
 
-              // Your Count Section
               ItemDetailsDesign.buildSectionHeader("Your Count",
                   icon: Icons.edit),
               Text(
@@ -204,7 +285,6 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
               ),
               SizedBox(height: isSmallScreen ? 24 : 32),
 
-              // Add Button
               ItemDetailsDesign.buildAddButton(
                 onPressed: _addInventoryCount,
                 isSmallScreen: isSmallScreen,

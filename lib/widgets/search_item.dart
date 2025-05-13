@@ -1,4 +1,4 @@
-import 'package:_3gx_application/backend/get_item_details.dart';
+import 'package:_3gx_application/backend/erpGetItem.dart';
 import 'package:_3gx_application/screens/Toby/item_details.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +20,7 @@ class _InventorySearchState extends State<InventorySearch> {
 
     final response = await http.get(
       Uri.parse(
-          "http://10.0.2.2/3GXInventory/php/search_item.php?item_no=$itemNo"),
+          "http://192.168.86.31/3GXInventory/php/search_item.php?item_no=$itemNo"),
     );
 
     if (response.statusCode == 200) {
@@ -35,7 +35,8 @@ class _InventorySearchState extends State<InventorySearch> {
           barcode: data["Barcode"]?.toString() ?? "", // Added missing barcode
           lastOrderDate: _parseDate(data["Last_Order_Date"]),
           dateCreated: _parseDate(data["Date_Created"]),
-          dateModified: _parseDate(data["Date_Modified"]),
+          dateModified: _parseDate(data["Date_Modified"]), 
+          imageFilename: data["Item_Pix_Filename"]?.toString() ?? '',
         );
 
         // Navigate to ItemDetailsPage with retrieved item

@@ -1,23 +1,34 @@
-import 'package:_3gx_application/backend/get_branches.dart';
-import 'package:_3gx_application/backend/get_item_details.dart';
+import 'package:_3gx_application/backend/erpGetBranchSpinner.dart';
+import 'package:_3gx_application/backend/erpGetItem.dart';
 import 'package:_3gx_application/screens/Toby/item_details.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ItemlistPage extends StatefulWidget {
+  const ItemlistPage({super.key});
+
   @override
   _ItemlistPageState createState() => _ItemlistPageState();
 }
 
+enum FilterType { priceRange, highToLow, lowToHigh, alphabetical, itemno }
+
+FilterType _selectedFilterType = FilterType.itemno;
+
 class _ItemlistPageState extends State<ItemlistPage> {
   bool _isSearching = false;
   TextEditingController _searchController = TextEditingController();
+  TextEditingController _minPriceController = TextEditingController();
+  TextEditingController _maxPriceController = TextEditingController();
+
   List<Item> _allItems = [];
   List<Item> _filteredItems = [];
   String? selectedBranch;
   String? selectedBranchCode;
   int _currentPage = 0;
-  static const int _itemsPerPage = 4;
+  static const int _itemsPerPage = 5;
+  String _searchMode = 'Text';
 
   @override
   void initState() {
@@ -36,12 +47,54 @@ class _ItemlistPageState extends State<ItemlistPage> {
     setState(() {
       if (query.isEmpty) {
         _filteredItems = _allItems;
-      } else {
+      } else if (_searchMode == 'Text') {
         _filteredItems = _allItems.where((item) {
           return item.itemDesc.toLowerCase().contains(query.toLowerCase()) ||
-              item.itemNo.toLowerCase().contains(query.toLowerCase());
+              item.itemNo.toLowerCase().contains(query.toLowerCase()) ||
+              item.barcode.toLowerCase().contains(query.toLowerCase());
         }).toList();
+      } else if (_searchMode == 'Price') {
+        final price = double.tryParse(query);
+        if (price != null) {
+          _filteredItems = _allItems
+              .where((item) => item.itemPrice.toString().contains(query))
+              .toList();
+        } else {
+          _filteredItems = [];
+        }
       }
+    });
+  }
+
+  void _applyFilter() {
+    final min = double.tryParse(_minPriceController.text) ?? 0;
+    final max = double.tryParse(_maxPriceController.text) ?? double.infinity;
+
+    setState(() {
+      switch (_selectedFilterType) {
+        case FilterType.priceRange:
+          _filteredItems = _allItems.where((item) {
+            return item.itemPrice >= min && item.itemPrice <= max;
+          }).toList();
+          break;
+        case FilterType.highToLow:
+          _filteredItems = [..._allItems]
+            ..sort((a, b) => b.itemPrice.compareTo(a.itemPrice));
+          break;
+        case FilterType.lowToHigh:
+          _filteredItems = [..._allItems]
+            ..sort((a, b) => a.itemPrice.compareTo(b.itemPrice));
+          break;
+        case FilterType.alphabetical:
+          _filteredItems = [..._allItems]..sort((a, b) =>
+              a.itemDesc.toLowerCase().compareTo(b.itemDesc.toLowerCase()));
+          break;
+        case FilterType.itemno:
+        _filteredItems = [..._allItems]
+          ..sort((a, b) => a.itemNo.toLowerCase().compareTo(b.itemNo.toLowerCase()));
+        break;
+      }
+      _currentPage = 0;
     });
   }
 
@@ -49,9 +102,166 @@ class _ItemlistPageState extends State<ItemlistPage> {
     return _allItems.fold(0.0, (sum, item) => sum + (item.qty));
   }
 
+  void _showFilterDialog(BuildContext context) {
+    final minController = TextEditingController(text: _minPriceController.text);
+    final maxController = TextEditingController(text: _maxPriceController.text);
+
+    FilterType tempSelectedFilterType = _selectedFilterType;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Filter Items',
+                          style: GoogleFonts.poppins(
+                              fontSize: 14, fontWeight: FontWeight.w500)),
+                      IconButton(
+                        icon: Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+
+                  // Filter Type Dropdown
+                  DropdownButtonFormField<FilterType>(
+                    value: tempSelectedFilterType,
+                    decoration: InputDecoration(
+                      labelText: 'Filter Type',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: FilterType.priceRange,
+                        child: Text('Filter by Price Range'),
+                      ),
+                      DropdownMenuItem(
+                        value: FilterType.highToLow,
+                        child: Text('Sort by Price: High to Low'),
+                      ),
+                      DropdownMenuItem(
+                        value: FilterType.lowToHigh,
+                        child: Text('Sort by Price: Low to High'),
+                      ),
+                      DropdownMenuItem(
+                        value: FilterType.alphabetical,
+                        child: Text('Sort Alphabetically'),
+                      ),
+                      DropdownMenuItem(
+                        value: FilterType.itemno,
+                        child: Text('Sort by Item Number'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        tempSelectedFilterType = value!;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  // Show price inputs only if Price Range selected
+                  if (tempSelectedFilterType == FilterType.priceRange) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: minController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Min Price',
+                              prefixIcon: Icon(Icons.php_rounded),
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: maxController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              labelText: 'Max Price',
+                              prefixIcon: Icon(Icons.php_rounded),
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                  ],
+
+                  // Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          minController.clear();
+                          maxController.clear();
+                          setState(() {
+                            _minPriceController.clear();
+                            _maxPriceController.clear();
+                            _filteredItems = _allItems;
+                            _selectedFilterType = FilterType.priceRange;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Text('Clear',
+                            style: GoogleFonts.poppins(color: Colors.red)),
+                      ),
+                      SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          this.setState(() {
+                            _selectedFilterType = tempSelectedFilterType;
+                            _minPriceController.text = minController.text;
+                            _maxPriceController.text = maxController.text;
+                            _applyFilter();
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Text('Apply',
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 1000;
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -61,7 +271,9 @@ class _ItemlistPageState extends State<ItemlistPage> {
                   controller: _searchController,
                   autofocus: true,
                   decoration: InputDecoration(
-                    hintText: 'Search by item name or number...',
+                    hintText: _searchMode == 'Price'
+                        ? 'Search by price...'
+                        : 'Search by item name, barcode, or number...',
                     border: InputBorder.none,
                     hintStyle:
                         GoogleFonts.poppins(color: Colors.grey, fontSize: 14),
@@ -78,6 +290,25 @@ class _ItemlistPageState extends State<ItemlistPage> {
                   ),
                 ),
           actions: [
+            if (_isSearching)
+              DropdownButton<String>(
+                value: _searchMode,
+                underline: SizedBox(),
+                icon: Icon(Icons.arrow_drop_down, color: Colors.black),
+                items: ['Text', 'Price'].map((mode) {
+                  return DropdownMenuItem<String>(
+                    value: mode,
+                    child: Text(mode, style: GoogleFonts.poppins(fontSize: 12)),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _searchMode = value!;
+                    _searchController.clear();
+                    _filterItems('');
+                  });
+                },
+              ),
             IconButton(
               icon: Icon(
                 _isSearching ? Icons.close : Icons.search,
@@ -94,26 +325,16 @@ class _ItemlistPageState extends State<ItemlistPage> {
                 });
               },
             ),
-            IconButton(
-              icon: Icon(
-                Icons.qr_code,
-                color: Colors.black,
-                size: 20,
-              ),
-              onPressed: () {
-                // Scanner functionality
-              },
-            ),
           ],
           elevation: 0,
           backgroundColor: Colors.white,
         ),
         body: Padding(
           padding: EdgeInsets.only(
-            top: isSmallScreen ? 5.0 : 5.0, // Custom top padding
-            left: isSmallScreen ? 20.0 : 5.0,
-            right: isSmallScreen ? 20.0 : 5.0,
-            bottom: isSmallScreen ? 20.0 : 20.0,
+            top: isSmallScreen ? 5.0 : 5.0,
+            left: isSmallScreen ? 20.0 : 50.0,
+            right: isSmallScreen ? 20 : 50.0,
+            bottom: isSmallScreen ? 20.0 : 50.0,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,135 +345,101 @@ class _ItemlistPageState extends State<ItemlistPage> {
                   if (!snapshot.hasData) {
                     return Center(child: CircularProgressIndicator());
                   }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Select Branch",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.grey,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: DropdownButtonFormField<String>(
+                      value: selectedBranch,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       ),
-                      SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: selectedBranch,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                        ),
-                        items: snapshot.data!
-                            .map<DropdownMenuItem<String>>((branch) {
-                          return DropdownMenuItem<String>(
-                            value: branch['BranchName'],
-                            child: Text(branch['BranchName']!),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedBranch = value;
-                            selectedBranchCode = snapshot.data!.firstWhere(
-                                    (branch) => branch['BranchName'] == value)[
-                                'BranchCode'];
-                          });
-                        },
-                        hint: Text("Select a branch"),
-                      ),
-                      SizedBox(height: 16),
-                    ],
+                      items: snapshot.data!.map((branch) {
+                        return DropdownMenuItem<String>(
+                          value: branch['BranchName'],
+                          child: Text(branch['BranchName'] ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedBranch = value;
+                          selectedBranchCode = snapshot.data!.firstWhere(
+                              (branch) =>
+                                  branch['BranchName'] == value)['BranchCode'];
+                        });
+                      },
+                      hint: Text("Select Branch",
+                          style: GoogleFonts.poppins(fontSize: 14)),
+                      dropdownColor: Colors.white,
+                    ),
                   );
                 },
               ),
-              // Summary Section
-              Text(
-                'Summary',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              SizedBox(height: 10),
-              // Helper function to sum the total units from _allItems
 
-// Summary container in your widget tree:
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 0, 0, 0),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              SizedBox(height: 8),
+
+              // PRICE RANGE INPUT
+
+              SizedBox(height: 16),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0), // Add horizontal padding
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Total Items",
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          top:
+                              2.0), // Small vertical nudge for perfect alignment
+                      child: Text(
+                        'Items',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          "${_allItems.length}",
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    SizedBox(width: 20),
                     Container(
-                      height: 40,
-                      width: 2,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Total Units",
+                      height: 28, // Perfect height to match text size
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showFilterDialog(context),
+                        icon: Icon(Icons.filter_alt, size: 14),
+                        label: Text(
+                          'Filter',
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight
+                                .w500, // Slightly bolder for better contrast
                           ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          "${getTotalUnitsAll()}",
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
                           ),
+                          elevation: 0,
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              SizedBox(height: 16),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Items',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
               Divider(),
+              const SizedBox(height: 20),
               Expanded(
                 child: _filteredItems.isEmpty
                     ? Center(child: Text('No items available'))
@@ -265,13 +452,12 @@ class _ItemlistPageState extends State<ItemlistPage> {
                                       _itemsPerPage
                                   ? _itemsPerPage
                                   : (_filteredItems.length -
-                                      (_currentPage *
-                                          _itemsPerPage)), // Show max 5 items
+                                      (_currentPage * _itemsPerPage)),
                               itemBuilder: (context, index) {
                                 int actualIndex =
                                     _currentPage * _itemsPerPage + index;
                                 if (actualIndex >= _filteredItems.length)
-                                  return SizedBox(); // Prevent out-of-bounds error
+                                  return SizedBox();
 
                                 Item item = _filteredItems[actualIndex];
                                 return ListTile(
@@ -280,7 +466,7 @@ class _ItemlistPageState extends State<ItemlistPage> {
                                     style: GoogleFonts.poppins(),
                                   ),
                                   subtitle: Text(
-                                    'Item No: ${item.itemNo}\nPrice: ${item.itemPrice} | Qty: ${item.qty}',
+                                    'Item No: ${item.itemNo}\nBarcode: ${item.barcode}\nPrice: ${item.itemPrice} | Qty: ${item.qty}',
                                     style: GoogleFonts.poppins(
                                       color: Colors.grey[600],
                                     ),
