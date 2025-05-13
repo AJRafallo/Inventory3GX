@@ -1,8 +1,12 @@
+/*import 'package:flutter/material.dart';
 import 'package:_3gx_application/screens/Toby/item_page.dart';
 import 'package:_3gx_application/screens/Toby/profile.dart';
-import 'package:flutter/material.dart';
 
 class BottomNavBar extends StatefulWidget {
+  final String username; // Accept username as a parameter
+
+  const BottomNavBar({Key? key, required this.username}) : super(key: key);
+
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
@@ -10,10 +14,16 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    ItemlistPage(),
-    ProfilePage(),
-  ];
+  late List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      ItemlistPage(),
+      ProfileScreen(username: widget.username), // Use widget.username
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -45,3 +55,4 @@ class _BottomNavBarState extends State<BottomNavBar> {
     );
   }
 }
+*/

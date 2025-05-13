@@ -1,8 +1,8 @@
 import 'dart:convert';
+import 'package:_3gx_application/screens/Toby/item_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:_3gx_application/screens/Adrey/signuppage.dart';
-import 'package:_3gx_application/screens/Toby/side_bar.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,12 +18,16 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   Future<void> loginUser() async {
-    const String url = "http://192.168.86.20/3GXInventory/php/login.php";
+    const String url = "http://192.168.86.31/3GXInventory/php/login.php";
 
     Map<String, String> body = {
       "Uname": _unameController.text.trim(),
       "Pword": _pwordController.text.trim(),
     };
+
+    setState(() {
+      _isLoading = true; // Set loading state to true when the request starts
+    });
 
     try {
       final response = await http.post(
@@ -49,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => BottomNavBar()),
+          MaterialPageRoute(builder: (context) => ItemlistPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,8 +63,14 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       print("⚠️ Network Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Network error: Could not connect to server")),
+        const SnackBar(
+            content: Text("Network error: Could not connect to server")),
       );
+    } finally {
+      setState(() {
+        _isLoading =
+            false; // Set loading state to false when the request finishes
+      });
     }
   }
 
@@ -76,6 +86,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Center(
               child: isWideScreen
                   ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Expanded(
                           child: Container(
@@ -93,7 +104,8 @@ class _LoginPageState extends State<LoginPage> {
                                 const SizedBox(height: 10),
                                 const Text(
                                   'Tabaco - Legazpi - Daet - Sorsogon',
-                                  style: TextStyle(color: Colors.white, fontSize: 18),
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 18),
                                 ),
                               ],
                             ),
@@ -104,21 +116,21 @@ class _LoginPageState extends State<LoginPage> {
                     )
                   : Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 30),
+                        Padding(
+                          padding: const EdgeInsets.all(50.0),
                           child: Column(
-
                             children: [
                               Image.asset(
                                 'lib/assets/Laptop.png',
                                 width: constraints.maxWidth * 0.6,
-                                height: 200,
+                                height: 300,
                                 fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 10),
                               const Text(
                                 'Tabaco - Legazpi - Daet - Sorsogon',
-                                style: TextStyle(color: Colors.black, fontSize: 16),
+                                style: TextStyle(
+                                    color: Colors.black, fontSize: 16),
                               ),
                             ],
                           ),
@@ -174,7 +186,8 @@ class _LoginPageState extends State<LoginPage> {
                 borderRadius: BorderRadius.all(Radius.circular(25)),
               ),
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off),
                 onPressed: () {
                   setState(() {
                     _obscurePassword = !_obscurePassword;
@@ -211,7 +224,8 @@ class _LoginPageState extends State<LoginPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const RegisterScreen()),
                   );
                 },
                 child: const Text(

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 Future<void> addInventoryCount(
     String itemNo, String braNo, double count, String user) async {
   // Your PHP script URL
-  final String url = 'http://192.168.1.16/3GXInventory/php/insert_count.php';
+  final String url = 'http://192.168.86.31/3GXInventory/php/erpInsertCount.php';
 
   try {
     // Send the POST request to the PHP backend

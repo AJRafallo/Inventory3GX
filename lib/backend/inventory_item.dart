@@ -1,4 +1,4 @@
-class Item {
+/*class Item {
   final String itemNo;
   final String itemDesc;
   final double itemPrice;
@@ -8,6 +8,7 @@ class Item {
   final DateTime? lastOrderDate;
   final DateTime? dateCreated;
   final DateTime? dateModified; // Included DateModified
+  final String? itemPixFilename;
 
   Item({
     required this.itemNo,
@@ -19,6 +20,7 @@ class Item {
     this.lastOrderDate,
     this.dateCreated,
     this.dateModified,
+    this.itemPixFilename
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -37,10 +39,11 @@ class Item {
       itemPrice: json['Item_Price'] != null ? double.tryParse(json['Item_Price'].toString()) ?? 0.0 : 0.0,
       qty: json['Qty'] != null ? double.tryParse(json['Qty'].toString()) ?? 0.0 : 0.0,
       barcode: json['Barcode'] ?? '',
+      itemPixFilename: json['itemPixFilename'] ?? '',
       
       lastOrderDate: parseDate(json['Last_Order_Date']),
       dateCreated: parseDate(json['DateCreated']),
       dateModified: parseDate(json['DateModified']),
     );
   }
-}
+}*/

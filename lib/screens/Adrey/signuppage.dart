@@ -34,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    const String url = "http://192.168.86.20/3GXInventory/php/register.php";
+    const String url = "http://192.168.86.31/3GXInventory/php/register.php";
     Map<String, String> body = {
       "Uname": _unameController.text.trim(),
       "Pword": _pwordController.text,
