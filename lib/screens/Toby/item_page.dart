@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:_3gx_application/backend/erpGetBranchSpinner.dart';
 import 'package:_3gx_application/backend/erpGetItem.dart';
+import 'package:_3gx_application/screens/Adrey/loginpage.dart';
 import 'package:_3gx_application/screens/Toby/item_details.dart';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 class ItemlistPage extends StatefulWidget {
   const ItemlistPage({super.key});
@@ -90,9 +94,9 @@ class _ItemlistPageState extends State<ItemlistPage> {
               a.itemDesc.toLowerCase().compareTo(b.itemDesc.toLowerCase()));
           break;
         case FilterType.itemno:
-        _filteredItems = [..._allItems]
-          ..sort((a, b) => a.itemNo.toLowerCase().compareTo(b.itemNo.toLowerCase()));
-        break;
+          _filteredItems = [..._allItems]..sort((a, b) =>
+              a.itemNo.toLowerCase().compareTo(b.itemNo.toLowerCase()));
+          break;
       }
       _currentPage = 0;
     });
@@ -325,6 +329,14 @@ class _ItemlistPageState extends State<ItemlistPage> {
                 });
               },
             ),
+            IconButton(
+              icon: Icon(Icons.logout, color: Colors.black),
+              tooltip: 'Logout',
+              onPressed: () {
+                // Call your logout logic here
+                logout(); // Define this method to handle logout
+              },
+            ),
           ],
           elevation: 0,
           backgroundColor: Colors.white,
@@ -545,5 +557,31 @@ class _ItemlistPageState extends State<ItemlistPage> {
         ),
       ),
     );
+  }
+
+  Future<void> logout() async {
+    const url = "http://192.168.86.31/A1PrimeInventory/logout.php";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      final data = jsonDecode(response.body);
+
+      if (data["status"] == "success") {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Logout failed: ${data['message']}")),
+        );
+      }
+    } catch (e) {
+      print("Logout error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("⚠️ Network error during logout")),
+      );
+    }
   }
 }
